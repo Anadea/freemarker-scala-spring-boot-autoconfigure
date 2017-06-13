@@ -56,6 +56,19 @@ class ScalaWrapperTest extends WordSpec {
         assert(wrappedUser.getMethodAsString("sayHi", List(new SimpleScalar("Bob"), new SimpleNumber(100))) == "Hi, Bob 100")
       }
     }
+
+    "resolving getter by property name without property" should {
+      "return result" in {
+        assert(wrappedUser.getObjectAsString("value") == "value")
+      }
+    }
+
+    "resolving getter by getter name without property" should {
+      "return result" in {
+        assert(wrappedUser.getMethodAsString("getValue", Nil) == "value")
+      }
+    }
+
   }
 
   class User {
@@ -68,6 +81,8 @@ class ScalaWrapperTest extends WordSpec {
 
     def getName: String = name
     def setName(name: String): Unit = this.name = name
+
+    def getValue: String = "value"
 
   }
 

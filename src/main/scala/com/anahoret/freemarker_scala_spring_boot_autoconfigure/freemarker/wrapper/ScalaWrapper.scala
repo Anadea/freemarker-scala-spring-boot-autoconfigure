@@ -14,7 +14,7 @@ class ScalaWrapper extends ObjectWrapper {
 
   private val defaultObjectWrapper = defaultObjectWrapperBuilder.build()
 
-  def wrap(obj: scala.Any): TemplateModel = {
+  override def wrap(obj: scala.Any): TemplateModel = {
     obj match {
       case null => null
       case option: Option[_] => option match {
@@ -49,39 +49,50 @@ class ScalaWrapper extends ObjectWrapper {
 
     private val objectClass = obj.getClass
 
-    def findField(clazz: Class[_], fieldName: String): Option[Field] = {
+    override def get(key: String): TemplateModel = {
+      val fieldValue = findField(objectClass, key).map(_.get(obj)).map(wrapper.wrap)
+      val methodValue = findMethod(objectClass, key) match {
+        case Some(method) if method.getParameterCount == 0 => Some(wrapper.wrap(method.invoke(obj)))
+        case Some(_) => Some(new ScalaMethodWrapper(obj, key, wrapper))
+        case _ => None
+      }
+      val getterMethodValue = if (key.startsWith("get") && key.length > 3) {
+        findNoParameterMethod(objectClass, key)
+          .orElse {
+            val mName = key.slice(3, 4).toLowerCase() + key.drop(4) // remove "get" prefix and uncapitalize first letter
+            findNoParameterMethod(objectClass, mName)
+          }
+      } else {
+        findMethod(objectClass, "get" + key.capitalize) match {
+          case Some(method) if method.getParameterCount == 0 => Some(wrapper.wrap(method.invoke(obj)))
+          case _ => None
+        }
+      }
+
+      fieldValue
+        .orElse(getterMethodValue)
+        .orElse(methodValue)
+        .getOrElse(defaultObjectWrapper.wrap(null))
+    }
+
+    private def findField(clazz: Class[_], fieldName: String): Option[Field] = {
       clazz.getDeclaredFields.find(f => f.getName == fieldName && Modifier.isPublic(f.getModifiers)) match {
         case None if clazz != classOf[Object] => findField(clazz.getSuperclass, fieldName)
         case other => other
       }
     }
 
-    def findMethod(clazz: Class[_], methodName: String): Option[Method] = {
+    private def findMethod(clazz: Class[_], methodName: String): Option[Method] = {
       clazz.getDeclaredMethods.find(m => m.getName == methodName && Modifier.isPublic(m.getModifiers)) match {
         case None if clazz != classOf[Object] => findMethod(clazz.getSuperclass, methodName)
         case other => other
       }
     }
 
-    override def get(key: String): TemplateModel = {
-      val fieldValue = findField(objectClass, key).map(_.get(obj)).map(wrapper.wrap)
-      lazy val methodValue = findMethod(objectClass, key) match {
-        case Some(method) if method.getParameterCount == 0 => Some(wrapper.wrap(method.invoke(obj)))
-        case Some(_) => Some(new ScalaMethodWrapper(obj, key, wrapper))
-        case _ => None
-      }
-      lazy val getterMethodValue = if (key.startsWith("get") && key.length > 3) {
-        val mName = key.slice(3, 4).toLowerCase() + key.drop(4) // remove "get" prefix and uncapitalize first letter
-        findMethod(objectClass, mName) match {
-          case Some(method) if method.getParameterCount == 0 => Some(new ScalaMethodWrapper(obj, mName, wrapper))
-          case _ => None
-        }
-      } else { None }
-
-      fieldValue
-        .orElse(getterMethodValue)
-        .orElse(methodValue)
-        .getOrElse(defaultObjectWrapper.wrap(null))
+    private def findNoParameterMethod(clazz: Class[_], methodName: String): Option[ScalaMethodWrapper] = {
+      findMethod(clazz, methodName)
+        .filter(_.getParameterCount == 0)
+        .map(_ => new ScalaMethodWrapper(obj, methodName, wrapper))
     }
 
     override def isEmpty: Boolean = false
