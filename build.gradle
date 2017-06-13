@@ -1,0 +1,48 @@
+group 'com.anahoret'
+version '1.0-RELEASE'
+
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "gradle.plugin.com.github.maiflai:gradle-scalatest:0.15"
+    }
+}
+
+apply plugin: 'maven'
+apply plugin: 'scala'
+apply plugin: "com.github.maiflai.scalatest"
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'org.scala-lang', name: 'scala-library', version: '2.12.2'
+    compile group: 'org.springframework', name: 'spring-context', version: '4.3.8.RELEASE'
+    compile group: 'org.springframework', name: 'spring-context-support', version: '4.3.8.RELEASE'
+    compile group: 'org.springframework', name: 'spring-webmvc', version: '4.3.8.RELEASE'
+    compile group: 'org.freemarker', name: 'freemarker', version: '2.3.23'
+    compile group: 'org.springframework.boot', name: 'spring-boot-autoconfigure', version: '1.5.3.RELEASE'
+
+    testCompile group: 'org.scalatest', name: 'scalatest_2.12', version: '3.0.3'
+    testRuntime 'org.pegdown:pegdown:1.4.2'
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: "http://artifactory.anahoret.com/artifactory/anahoret/") {
+                authentication(userName: anahoretArtifactoryUser, password: anahoretArtifactoryPassword)
+            }
+            pom.groupId = 'com.anahoret'
+            pom.artifactId = 'freemarker-scala-spring-boot-autoconfigure'
+            pom.version = version
+        }
+    }
+}

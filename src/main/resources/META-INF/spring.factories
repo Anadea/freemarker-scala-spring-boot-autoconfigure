@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.anahoret.freemarker_scala_spring_boot_autoconfigure.config.FreemarkerScalaWrapperConfiguration
