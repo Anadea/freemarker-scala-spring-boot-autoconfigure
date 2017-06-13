@@ -16,18 +16,23 @@ class ScalaWrapper extends ObjectWrapper {
 
   override def wrap(obj: scala.Any): TemplateModel = {
     obj match {
-      case null => null
+      case null => defaultObjectWrapper.wrap(null)
+      case jCollection: util.Collection[_] => defaultObjectWrapper.wrap(jCollection)
+      case jMap: util.Map[_, _] => defaultObjectWrapper.wrap(jMap)
+      case jIterable: java.lang.Iterable[_] => defaultObjectWrapper.wrap(jIterable.iterator())
+      case jIterator: util.Iterator[_] => defaultObjectWrapper.wrap(jIterator)
+      case date: java.util.Date => defaultObjectWrapper.wrap(date)
+      case jNumber: java.lang.Number => defaultObjectWrapper.wrap(jNumber)
+      case array: Array[_] => defaultObjectWrapper.wrap(array)
       case option: Option[_] => option match {
         case Some(o) => wrap(o)
         case _ => null
       }
       case model: TemplateModel => model
-      case array: Array[_] => new ArrayModel(array, this)
       case seq: Seq[_] => new SeqModel(seq, this)
       case map: Map[_, _] => new MapModel(map, this)
       case iterable: Iterable[_] => new IterableModel(iterable, this)
       case iterator: Iterator[_] => new IteratorModel(iterator, this)
-      case date: java.util.Date => defaultObjectWrapper.wrap(date)
       case bool: Boolean => if (bool) TemplateBooleanModel.TRUE else TemplateBooleanModel.FALSE
       case b => new ScalaObjectWrapper(b, this)
     }

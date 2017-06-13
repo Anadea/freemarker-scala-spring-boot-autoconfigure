@@ -1,7 +1,9 @@
 package com.anahoret.freemarker_scala_spring_boot_autoconfigure.freemarker.wrapper
 
+import java.{lang, util}
+
 import com.anahoret.freemarker_scala_spring_boot_autoconfigure.models.SomeOuter
-import freemarker.template.{SimpleNumber, SimpleScalar, TemplateModel}
+import freemarker.template._
 import org.scalatest.WordSpec
 
 import scala.collection.convert.ImplicitConversions._
@@ -79,6 +81,95 @@ class ScalaWrapperTest extends WordSpec {
     }
 
   }
+
+  "A wrapper" should {
+    "resolve java list to list model" in {
+      val jList = new util.ArrayList[String]()
+      jList.add("One")
+      jList.add("Two")
+      val wrappedJList = wrap[DefaultListAdapter](jList)
+
+      assert(wrappedJList.size() == 2)
+      assert(wrappedJList.get(0).asInstanceOf[SimpleScalar].getAsString == "One")
+      assert(wrappedJList.get(1).asInstanceOf[SimpleScalar].getAsString == "Two")
+    }
+
+    "resolve java set to sequence model" in {
+      val jSet = new util.HashSet[String]()
+      jSet.add("One")
+      jSet.add("Two")
+      val wrappedJSet = wrap[SimpleSequence](jSet)
+
+      assert(wrappedJSet.size() == 2)
+      assert(wrappedJSet.get(0).asInstanceOf[SimpleScalar].getAsString != wrappedJSet.get(1).asInstanceOf[SimpleScalar].getAsString)
+    }
+
+    "resolve java map to map model" in {
+      val jMap = new util.HashMap[String, Integer]()
+      jMap.put("One", 1)
+      jMap.put("Two", 2)
+      val wrappedJMap = wrap[DefaultMapAdapter](jMap)
+
+      assert(wrappedJMap.size() == 2)
+      assert(wrappedJMap.get("One").asInstanceOf[SimpleNumber].getAsNumber == 1.asInstanceOf[Number])
+      assert(wrappedJMap.get("Two").asInstanceOf[SimpleNumber].getAsNumber == 2.asInstanceOf[Number])
+    }
+
+    "resolve java iterator to iterator model" in {
+      val jSet = new util.HashSet[String]()
+      jSet.add("One")
+      jSet.add("Two")
+      val wrappedJIterator = wrap[DefaultIteratorAdapter](jSet.iterator())
+
+      val iterator = wrappedJIterator.iterator()
+      assert(iterator.next() != iterator.next())
+    }
+
+    "resolve java iterable to iterator model" in {
+      val jIterable = new lang.Iterable[String] {
+        override def iterator(): util.Iterator[String] = new java.util.Iterator[String]() {
+          var i = 0
+          override def hasNext: Boolean = i < 2
+
+          override def next(): String = {
+            i match {
+              case 0 => i += 1; "One"
+              case 1 => i += 1; "Two"
+              case _ => throw new NoSuchElementException
+            }
+          }
+        }
+      }
+      val wrappedJIterable = wrap[DefaultIteratorAdapter](jIterable)
+
+      val iterator = wrappedJIterable.iterator()
+      assert(iterator.next() != iterator.next())
+    }
+
+    "resolve java array to array model" in {
+      val wrappedJArray = wrap[DefaultArrayAdapter](new SomeOuter().wrappedArray(new ScalaWrapper))
+
+      assert(wrappedJArray.size() == 2)
+      assert(wrappedJArray.get(0).asInstanceOf[SimpleScalar].getAsString == "One")
+      assert(wrappedJArray.get(1).asInstanceOf[SimpleScalar].getAsString == "Two")
+    }
+
+    "resolve java number to number model" in {
+      val wrappedJNumber = wrap[SimpleNumber](new lang.Long(100))
+
+      assert(wrappedJNumber.getAsNumber.longValue() == 100L)
+    }
+
+    "resolve java boolean to boolean model" in {
+      val jBoolean = java.lang.Boolean.TRUE
+      val wrappedJBoolean = wrap[TemplateBooleanModel](jBoolean)
+
+      assert(wrappedJBoolean.getAsBoolean)
+    }
+  }
+
+  private def wrap[T](obj: Any): T =
+    new ScalaWrapper().wrap(obj).asInstanceOf[T]
 
   class User {
     val id = 42
