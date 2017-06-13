@@ -32,13 +32,13 @@ class ScalaWrapperTest extends WordSpec {
 
     "resolving property without getter by name" should {
       "return result" in {
-        assert(wrappedUser.getObjectAsString("id") == "42")
+        assert(wrappedUser.getObjectAsNumber("id").intValue() == 42)
       }
     }
 
     "resolving property without getter by getter method" should {
       "return result" in {
-        assert(wrappedUser.getMethodAsString("getId", Nil) == "42")
+        assert(wrappedUser.getMethodAsNumber("getId", Nil).intValue() == 42)
       }
     }
 
@@ -166,6 +166,15 @@ class ScalaWrapperTest extends WordSpec {
 
       assert(wrappedJBoolean.getAsBoolean)
     }
+
+    "wrap collection items" in {
+      val jList = new util.ArrayList[User]()
+      jList.add(new User)
+      val wrappedJList = wrap[DefaultListAdapter](jList)
+
+      val num = wrappedJList.get(0).asInstanceOf[ScalaObjectWrapper].get("jLong").asInstanceOf[SimpleNumber].getAsNumber
+      assert(num.longValue() == 100)
+    }
   }
 
   private def wrap[T](obj: Any): T =
@@ -173,6 +182,7 @@ class ScalaWrapperTest extends WordSpec {
 
   class User {
     val id = 42
+    var jLong = new lang.Long(100)
 
     var name: String = "Alex"
     def sayHi(): String = s"Hi, $name"
@@ -188,10 +198,16 @@ class ScalaWrapperTest extends WordSpec {
 
   class ScalaObjectWrapperExt(scalaObjectWrapper: ScalaObjectWrapper) {
     def getObjectAsString(key: String): String =
-      scalaObjectWrapper.get(key).asInstanceOf[ScalaObjectWrapper].getAsString
+      scalaObjectWrapper.get(key).asInstanceOf[SimpleScalar].getAsString
+
+    def getObjectAsNumber(key: String): Number =
+      scalaObjectWrapper.get(key).asInstanceOf[SimpleNumber].getAsNumber
 
     def getMethodAsString(key: String, args: List[TemplateModel]): String =
-      scalaObjectWrapper.get(key).asInstanceOf[ScalaMethodWrapper].exec(args).asInstanceOf[ScalaObjectWrapper].getAsString
+      scalaObjectWrapper.get(key).asInstanceOf[ScalaMethodWrapper].exec(args).asInstanceOf[SimpleScalar].getAsString
+
+    def getMethodAsNumber(key: String, args: List[TemplateModel]): Number =
+      scalaObjectWrapper.get(key).asInstanceOf[ScalaMethodWrapper].exec(args).asInstanceOf[SimpleNumber].getAsNumber
   }
 
   implicit def scalaObjectWrapper2Ext(scalaObjectWrapper: ScalaObjectWrapper): ScalaObjectWrapperExt =

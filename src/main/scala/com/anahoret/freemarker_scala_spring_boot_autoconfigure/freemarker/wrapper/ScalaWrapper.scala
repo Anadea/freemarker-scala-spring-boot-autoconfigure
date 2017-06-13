@@ -6,24 +6,22 @@ import java.util
 import freemarker.ext.beans.StringModel
 import freemarker.template._
 
-class ScalaWrapper extends ObjectWrapper {
+class ScalaWrapper extends DefaultObjectWrapper(Configuration.VERSION_2_3_23) {
 
-  private val defaultObjectWrapperBuilder = new DefaultObjectWrapperBuilder(Configuration.VERSION_2_3_23)
-  defaultObjectWrapperBuilder.setOuterIdentity(this)
-  defaultObjectWrapperBuilder.setExposeFields(true)
-
-  private val defaultObjectWrapper = defaultObjectWrapperBuilder.build()
+  setOuterIdentity(this)
+  setExposeFields(true)
 
   override def wrap(obj: scala.Any): TemplateModel = {
     obj match {
-      case null => defaultObjectWrapper.wrap(null)
-      case jCollection: util.Collection[_] => defaultObjectWrapper.wrap(jCollection)
-      case jMap: util.Map[_, _] => defaultObjectWrapper.wrap(jMap)
-      case jIterable: java.lang.Iterable[_] => defaultObjectWrapper.wrap(jIterable.iterator())
-      case jIterator: util.Iterator[_] => defaultObjectWrapper.wrap(jIterator)
-      case date: java.util.Date => defaultObjectWrapper.wrap(date)
-      case jNumber: java.lang.Number => defaultObjectWrapper.wrap(jNumber)
-      case array: Array[_] => defaultObjectWrapper.wrap(array)
+      case null => super.wrap(null)
+      case str: String => super.wrap(str)
+      case jCollection: util.Collection[_] => super.wrap(jCollection)
+      case jMap: util.Map[_, _] => super.wrap(jMap)
+      case jIterable: java.lang.Iterable[_] => super.wrap(jIterable.iterator())
+      case jIterator: util.Iterator[_] => super.wrap(jIterator)
+      case date: java.util.Date => super.wrap(date)
+      case jNumber: java.lang.Number => super.wrap(jNumber)
+      case array: Array[_] => super.wrap(array)
       case option: Option[_] => option match {
         case Some(o) => wrap(o)
         case _ => null
@@ -40,7 +38,7 @@ class ScalaWrapper extends ObjectWrapper {
 
   class ScalaMethodWrapper(obj: Any, methodName: String, wrapper: ObjectWrapper) extends TemplateMethodModelEx {
     override def exec(arguments: util.List[_]): AnyRef = {
-      val res = defaultObjectWrapper.wrap(obj)
+      val res = ScalaWrapper.super.wrap(obj)
         .asInstanceOf[StringModel]
         .get(methodName)
         .asInstanceOf[TemplateMethodModelEx]
@@ -84,7 +82,7 @@ class ScalaWrapper extends ObjectWrapper {
       fieldValue
         .orElse(getterMethodValue)
         .orElse(methodValue)
-        .getOrElse(defaultObjectWrapper.wrap(null))
+        .getOrElse(ScalaWrapper.super.wrap(null))
     }
 
     private def findField(clazz: Class[_], fieldName: String): Option[Field] = {
