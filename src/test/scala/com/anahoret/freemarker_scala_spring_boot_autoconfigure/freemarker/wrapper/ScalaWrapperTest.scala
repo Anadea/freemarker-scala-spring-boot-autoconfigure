@@ -1,5 +1,6 @@
 package com.anahoret.freemarker_scala_spring_boot_autoconfigure.freemarker.wrapper
 
+import com.anahoret.freemarker_scala_spring_boot_autoconfigure.models.SomeOuter
 import freemarker.template.{SimpleNumber, SimpleScalar, TemplateModel}
 import org.scalatest.WordSpec
 
@@ -66,6 +67,14 @@ class ScalaWrapperTest extends WordSpec {
     "resolving getter by getter name without property" should {
       "return result" in {
         assert(wrappedUser.getMethodAsString("getValue", Nil) == "value")
+      }
+    }
+
+    "resolving public method of private inner class" should {
+      "return result" in {
+        val wrapper = new ScalaWrapper
+        val wrappedSomeTrait = wrapper.wrap(new SomeOuter().getSomeInterface).asInstanceOf[ScalaObjectWrapper]
+        assert(wrappedSomeTrait.getObjectAsString("something") == "Something")
       }
     }
 

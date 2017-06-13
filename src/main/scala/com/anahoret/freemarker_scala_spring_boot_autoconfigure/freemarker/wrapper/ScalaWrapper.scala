@@ -50,9 +50,14 @@ class ScalaWrapper extends ObjectWrapper {
     private val objectClass = obj.getClass
 
     override def get(key: String): TemplateModel = {
-      val fieldValue = findField(objectClass, key).map(_.get(obj)).map(wrapper.wrap)
+      val fieldValue = findField(objectClass, key).map { field =>
+        field.setAccessible(true)
+        field.get(obj)
+      }.map(wrapper.wrap)
       val methodValue = findMethod(objectClass, key) match {
-        case Some(method) if method.getParameterCount == 0 => Some(wrapper.wrap(method.invoke(obj)))
+        case Some(method) if method.getParameterCount == 0 =>
+          method.setAccessible(true)
+          Some(wrapper.wrap(method.invoke(obj)))
         case Some(_) => Some(new ScalaMethodWrapper(obj, key, wrapper))
         case _ => None
       }
@@ -64,7 +69,9 @@ class ScalaWrapper extends ObjectWrapper {
           }
       } else {
         findMethod(objectClass, "get" + key.capitalize) match {
-          case Some(method) if method.getParameterCount == 0 => Some(wrapper.wrap(method.invoke(obj)))
+          case Some(method) if method.getParameterCount == 0 =>
+            method.setAccessible(true)
+            Some(wrapper.wrap(method.invoke(obj)))
           case _ => None
         }
       }
