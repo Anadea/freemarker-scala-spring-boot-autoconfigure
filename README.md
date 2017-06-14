@@ -53,15 +53,15 @@ ${user.sayHi("Bill", 100)}
 2. Add dependency to your _Maven_
     ```
     <dependency>
-        <groupId>com.anadea</groupId>
-        <artifactId>commons-testing</artifactId>
-        <version>0.1</version>
+        <groupId>com.anahoret</groupId>
+        <artifactId>freemarker-scala-spring-boot-autoconfigure</artifactId>
+        <version>1.0-RELEASE</version>
         <type>pom</type>
     </dependency>
     ```
     or _Gradle_
     ```
-    compile(group: 'com.anadea', name: 'commons-testing', version: '0.1')
+    compile(group: 'com.anahoret', name: 'freemarker-scala-spring-boot-autoconfigure', version: '1.0-RELEASE')
     ```
 
 3. Add following key to _application.properties_:
