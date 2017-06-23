@@ -39,8 +39,19 @@ task sourcesJar(type: Jar, dependsOn:classes) {
     from sourceSets.main.allSource
 }
 
+javadoc {
+    classpath += sourceSets.main.compileClasspath
+    source += sourceSets.main.allJava
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier 'javadoc'
+    from scaladoc.destinationDir
+}
+
 artifacts {
     archives sourcesJar
+    archives javadocJar
 }
 
 uploadArchives {
@@ -49,9 +60,35 @@ uploadArchives {
             repository(url: "http://artifactory.anahoret.com/artifactory/anahoret/") {
                 authentication(userName: anahoretArtifactoryUser, password: anahoretArtifactoryPassword)
             }
-            pom.groupId = 'com.anahoret'
+            pom.groupId = 'com.github.anadea'
             pom.artifactId = 'freemarker-scala-spring-boot-autoconfigure'
             pom.version = version
+            pom.packaging = 'jar'
+            pom.name = 'Freemarker Scala SpringBoot autoconfigure'
+            pom.project {
+                inceptionYear '2017'
+                description = 'Scala objects wrapper Spring Boot autoconfiguration for Freemarker library'
+                url = 'https://github.com/Anadea/freemarker-scala-spring-boot-autoconfigure'
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution 'repo'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'alexander_mikhalchenko'
+                        name = 'Alexander Mikhalchenko'
+                        email = 'aam@anadeainc.com'
+                    }
+                }
+                scm {
+                    connection = 'https://github.com/Anadea/freemarker-scala-spring-boot-autoconfigure.git'
+                    developerConnection = 'https://github.com/Anadea/freemarker-scala-spring-boot-autoconfigure.git'
+                    url = 'https://github.com/Anadea/freemarker-scala-spring-boot-autoconfigure'
+                }
+            }
         }
     }
 }
