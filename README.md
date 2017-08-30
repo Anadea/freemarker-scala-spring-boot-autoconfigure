@@ -35,36 +35,20 @@ ${user.sayHi("Bill", 100)}
 
 ### Usage
 
-1. Add Anahoret repository to your _Maven_
-    ```
-        <repository>
-          <id>anahoret</id>
-          <name>anahoret</name>
-          <url>http://artifactory.anahoret.com/artifactory/anahoret</url>
-        </repository>
-    ``` 
-    or _Gradle_
-    ```
-      maven {
-          url 'http://artifactory.anahoret.com/artifactory/anahoret'
-      }  
-    ```
-
-2. Add dependency to your _Maven_
+1. Add dependency to your _Maven_
     ```
     <dependency>
-        <groupId>com.anahoret</groupId>
+        <groupId>com.github.anadea</groupId>
         <artifactId>freemarker-scala-spring-boot-autoconfigure</artifactId>
         <version>1.0-RELEASE</version>
-        <type>pom</type>
     </dependency>
     ```
     or _Gradle_
     ```
-    compile(group: 'com.anahoret', name: 'freemarker-scala-spring-boot-autoconfigure', version: '1.0-RELEASE')
+    compile group: 'com.github.anadea', name: 'freemarker-scala-spring-boot-autoconfigure', version: '1.0-RELEASE'
     ```
 
-3. Add following key to _application.properties_:
+2. Add following key to _application.properties_:
     ```
     freemarker.use_scala_wrapper = true
     ```
