@@ -64,25 +64,32 @@ class ScalaWrapper extends DefaultObjectWrapper(Configuration.VERSION_2_3_23) {
         case Some(_) => Some(new ScalaMethodWrapper(obj, key, wrapper))
         case _ => None
       }
-      val getterMethodValue = if (key.startsWith("get") && key.length > 3) {
+      val getterMethodValue = findGetter(key, "get")
+      val isGetterMethodValue = findGetter(key, "is")
+
+      fieldValue
+        .orElse(getterMethodValue)
+        .orElse(isGetterMethodValue)
+        .orElse(methodValue)
+        .getOrElse(ScalaWrapper.super.wrap(null))
+    }
+
+    private def findGetter(key: String, prefix: String): Option[TemplateModel] = {
+      val prefixLength = prefix.length
+      if (key.startsWith(prefix) && key.length > prefixLength) {
         findNoParameterMethod(objectClass, key)
           .orElse {
-            val mName = key.slice(3, 4).toLowerCase() + key.drop(4) // remove "get" prefix and uncapitalize first letter
+            val mName = key.slice(prefixLength, prefixLength + 1).toLowerCase() + key.drop(prefixLength + 1) // remove prefix and uncapitalize first letter
             findNoParameterMethod(objectClass, mName)
           }
       } else {
-        findMethod(objectClass, "get" + key.capitalize) match {
+        findMethod(objectClass, prefix + key.capitalize) match {
           case Some(method) if method.getParameterCount == 0 =>
             method.setAccessible(true)
             Some(wrapper.wrap(method.invoke(obj)))
           case _ => None
         }
       }
-
-      fieldValue
-        .orElse(getterMethodValue)
-        .orElse(methodValue)
-        .getOrElse(ScalaWrapper.super.wrap(null))
     }
 
     private def findField(clazz: Class[_], fieldName: String): Option[Field] = {

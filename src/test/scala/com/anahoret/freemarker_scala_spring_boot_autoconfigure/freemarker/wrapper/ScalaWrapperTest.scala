@@ -1,6 +1,6 @@
 package com.anahoret.freemarker_scala_spring_boot_autoconfigure.freemarker.wrapper
 
-import java.{lang, util}
+import java.{ lang, util }
 
 import com.anahoret.freemarker_scala_spring_boot_autoconfigure.models.SomeOuter
 import freemarker.template._
@@ -77,6 +77,42 @@ class ScalaWrapperTest extends WordSpec {
         val wrapper = new ScalaWrapper
         val wrappedSomeTrait = wrapper.wrap(new SomeOuter().getSomeInterface).asInstanceOf[ScalaObjectWrapper]
         assert(wrappedSomeTrait.getObjectAsString("something") == "Something")
+      }
+    }
+
+    "resolving property with 'is' getter by name" should {
+      "return result" in {
+        assert(wrappedUser.getObjectAsBoolean("admin"))
+      }
+    }
+
+    "resolving property with 'is' getter by getter method" should {
+      "return result" in {
+        assert(wrappedUser.getMethodAsBoolean("isAdmin", Nil))
+      }
+    }
+
+    "resolving 'is' getter by property name without property" should {
+      "return result" in {
+        assert(wrappedUser.getObjectAsBoolean("active"))
+      }
+    }
+
+    "resolving 'is' getter by getter name without property" should {
+      "return result" in {
+        assert(wrappedUser.getMethodAsBoolean("isActive", Nil))
+      }
+    }
+
+    "resolving boolean property without getter by name" should {
+      "return result" in {
+        assert(wrappedUser.getObjectAsBoolean("banned"))
+      }
+    }
+
+    "resolving boolean property without getter by getter method" should {
+      "return result" in {
+        assert(wrappedUser.getMethodAsBoolean("isBanned", Nil))
       }
     }
 
@@ -182,6 +218,8 @@ class ScalaWrapperTest extends WordSpec {
 
   class User {
     val id = 42
+    val admin = true
+    val isBanned = true
     var jLong = new lang.Long(100)
 
     var name: String = "Alex"
@@ -193,6 +231,8 @@ class ScalaWrapperTest extends WordSpec {
     def setName(name: String): Unit = this.name = name
 
     def getValue: String = "value"
+    def isAdmin: Boolean = admin
+    def isActive: Boolean = true
 
   }
 
@@ -203,11 +243,18 @@ class ScalaWrapperTest extends WordSpec {
     def getObjectAsNumber(key: String): Number =
       scalaObjectWrapper.get(key).asInstanceOf[SimpleNumber].getAsNumber
 
+    def getObjectAsBoolean(key: String): Boolean =
+      scalaObjectWrapper.get(key).asInstanceOf[TemplateBooleanModel].getAsBoolean
+
     def getMethodAsString(key: String, args: List[TemplateModel]): String =
       scalaObjectWrapper.get(key).asInstanceOf[ScalaMethodWrapper].exec(args).asInstanceOf[SimpleScalar].getAsString
 
     def getMethodAsNumber(key: String, args: List[TemplateModel]): Number =
       scalaObjectWrapper.get(key).asInstanceOf[ScalaMethodWrapper].exec(args).asInstanceOf[SimpleNumber].getAsNumber
+
+    def getMethodAsBoolean(key: String, args: List[TemplateModel]): Boolean =
+      scalaObjectWrapper.get(key).asInstanceOf[ScalaMethodWrapper].exec(args).asInstanceOf[TemplateBooleanModel].getAsBoolean
+
   }
 
   implicit def scalaObjectWrapper2Ext(scalaObjectWrapper: ScalaObjectWrapper): ScalaObjectWrapperExt =
