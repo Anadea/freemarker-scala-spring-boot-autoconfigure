@@ -40,12 +40,12 @@ ${user.sayHi("Bill", 100)}
     <dependency>
         <groupId>com.github.anadea</groupId>
         <artifactId>freemarker-scala-spring-boot-autoconfigure</artifactId>
-        <version>1.0-RELEASE</version>
+        <version>1.1-RELEASE</version>
     </dependency>
     ```
     or _Gradle_
     ```
-    compile group: 'com.github.anadea', name: 'freemarker-scala-spring-boot-autoconfigure', version: '1.0-RELEASE'
+    compile group: 'com.github.anadea', name: 'freemarker-scala-spring-boot-autoconfigure', version: '1.1-RELEASE'
     ```
 
 2. Add following key to _application.properties_:
