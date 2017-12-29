@@ -223,8 +223,8 @@ class ScalaWrapperTest extends WordSpec {
     var jLong = new lang.Long(100)
 
     var name: String = "Alex"
-    def sayHi(): String = s"Hi, $name"
     def sayHi(n: String): String = s"Hi, $n"
+    def sayHi(): String = s"Hi, $name"
     def sayHi(n: String, i: Int): String = s"Hi, $n $i"
 
     def getName: String = name

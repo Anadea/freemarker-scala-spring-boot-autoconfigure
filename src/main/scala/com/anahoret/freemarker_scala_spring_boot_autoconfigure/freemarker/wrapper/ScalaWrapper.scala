@@ -58,9 +58,9 @@ class ScalaWrapper extends DefaultObjectWrapper(Configuration.VERSION_2_3_23) {
         field.get(obj)
       }.map(wrapper.wrap)
       val methodValue = findMethod(objectClass, key) match {
-        case Some(method) if method.getParameterCount == 0 =>
-          method.setAccessible(true)
-          Some(wrapper.wrap(method.invoke(obj)))
+        case Some(methodDescriptor) if methodDescriptor.isPropertyAccessor =>
+          methodDescriptor.method.setAccessible(true)
+          Some(wrapper.wrap(methodDescriptor.method.invoke(obj)))
         case Some(_) => Some(new ScalaMethodWrapper(obj, key, wrapper))
         case _ => None
       }
@@ -84,9 +84,10 @@ class ScalaWrapper extends DefaultObjectWrapper(Configuration.VERSION_2_3_23) {
           }
       } else {
         findMethod(objectClass, prefix + key.capitalize) match {
-          case Some(method) if method.getParameterCount == 0 =>
-            method.setAccessible(true)
-            Some(wrapper.wrap(method.invoke(obj)))
+          case Some(methodDescriptor) if methodDescriptor.isPropertyAccessor =>
+            methodDescriptor.method.setAccessible(true)
+            Some(wrapper.wrap(methodDescriptor.method.invoke(obj)))
+          case Some(method) => Some(new ScalaMethodWrapper(obj, method.name, wrapper))
           case _ => None
         }
       }
@@ -99,16 +100,26 @@ class ScalaWrapper extends DefaultObjectWrapper(Configuration.VERSION_2_3_23) {
       }
     }
 
-    private def findMethod(clazz: Class[_], methodName: String): Option[Method] = {
+    class MethodDescriptor(val method: Method, clazz: Class[_]) {
+      lazy val name: String = method.getName
+      lazy val parameterCount: Int = method.getParameterCount
+      lazy val isPropertyAccessor: Boolean =
+        method.getParameterCount == 0 &&
+          (clazz.getDeclaredFields.exists(_.getName == name) ||
+            (name.startsWith("is") && name(2).isUpper) ||
+            name.startsWith("get") && name(3).isUpper)
+    }
+
+    private def findMethod(clazz: Class[_], methodName: String): Option[MethodDescriptor] = {
       clazz.getDeclaredMethods.find(m => m.getName == methodName && Modifier.isPublic(m.getModifiers)) match {
         case None if clazz != classOf[Object] => findMethod(clazz.getSuperclass, methodName)
-        case other => other
+        case other => other.map(method => new MethodDescriptor(method, clazz))
       }
     }
 
     private def findNoParameterMethod(clazz: Class[_], methodName: String): Option[ScalaMethodWrapper] = {
       findMethod(clazz, methodName)
-        .filter(_.getParameterCount == 0)
+        .filter(_.parameterCount == 0)
         .map(_ => new ScalaMethodWrapper(obj, methodName, wrapper))
     }
 
